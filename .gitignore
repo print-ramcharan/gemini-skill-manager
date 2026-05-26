@@ -2,3 +2,20 @@ node_modules/
 dist/
 .DS_Store
 icon.icns
+
+# Unused logo variants; keep the active app logo only.
+colorful-padded.png
+colorful-padded.bak.png
+colorful-purple.png
+colorful-trans.png
+colorful-updated.bak.png
+icons/colorful-updated.icns
+icons/colorful-updated.iconset/
+icons/colorful-padded.icns
+icons/colorful-padded.iconset/
+icons/colorful-purple.icns
+icons/colorful-purple.iconset/
+icons/colorful-trans.icns
+icons/colorful-trans.iconset/
+icons/icon.iconset/
+icons/window-temp-*.png
