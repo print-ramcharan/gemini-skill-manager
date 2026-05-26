@@ -43,6 +43,49 @@ if (tokenWorker) {
     }
   });
 }
+
+// Per-skill token cache and helpers
+const skillTokenCache = new Map();
+
+function skillHash(skill) {
+  return `${skill.id}::${(skill.name||'')}::${(skill.description||'')}`;
+}
+
+function requestSkillToken(skill) {
+  const cache = skillTokenCache.get(skill.id);
+  const hash = skillHash(skill);
+  if (cache && cache.hash === hash) {
+    skill.tokens = cache.count;
+    updateSkillTokenBadge(skill.id, cache.count);
+    return Promise.resolve(cache.count);
+  }
+
+  return new Promise((resolve) => {
+    const reqId = `skill-${skill.id}-${Date.now()}`;
+    const model = modelSelect ? modelSelect.value : null;
+    const cb = (count) => {
+      skill.tokens = count;
+      skillTokenCache.set(skill.id, { hash, count, ts: Date.now() });
+      updateSkillTokenBadge(skill.id, count);
+      resolve(count);
+    };
+    if (tokenWorker) {
+      pendingWorkerRequests.set(reqId, cb);
+      tokenWorker.postMessage({ type: 'count', id: reqId, text: `${skill.id}\n${skill.name}\n${skill.description||''}`, model });
+    } else {
+      const est = estimateTokens(`${skill.id} ${skill.name} ${skill.description||''}`);
+      cb(est);
+    }
+  });
+}
+
+function updateSkillTokenBadge(skillId, count) {
+  const el = document.querySelector(`[data-token-badge="${skillId}"]`);
+  if (el) {
+    const formatted = count > 1000 ? `${(count/1000).toFixed(1)}k` : count;
+    el.textContent = `~${formatted}`;
+  }
+}
 const selectAllBtn = document.getElementById('select-all-btn');
 const deselectAllBtn = document.getElementById('deselect-all-btn');
 const collapseAllBtn = document.getElementById('collapse-all-btn');
@@ -228,9 +271,18 @@ function getSafetyLimitForModel(model) {
 
 // Update model window display when selection changes
 if (modelSelect) {
+  // restore previous selection
+  const saved = localStorage.getItem('gsm_selected_model');
+  if (saved) modelSelect.value = saved;
+
   modelSelect.addEventListener('change', () => {
+    localStorage.setItem('gsm_selected_model', modelSelect.value);
     modelWindowDisplay.textContent = formatNumber(getSafetyLimitForModel(modelSelect.value));
     updateStats();
+    // when model changes, clear skill cache so tokens are recomputed for new model
+    skillTokenCache.clear();
+    allSkills.forEach(s => { delete s.tokens; });
+    renderSkills();
   });
   // initialize
   modelWindowDisplay.textContent = formatNumber(getSafetyLimitForModel(modelSelect.value));
@@ -361,9 +413,11 @@ function renderSkills() {
     if (isExpanded) {
       const items = groupSkills.map(skill => {
         const isActive = selectedActiveIds.has(skill.id);
+        const tokenDisplay = skill.tokens ? (skill.tokens > 1000 ? `${(skill.tokens/1000).toFixed(1)}k` : skill.tokens) : '0';
         return `
           <div class="sub-skill-item ${isActive ? 'active' : ''}" data-skill-id="${skill.id}" title="${skill.description}">
             <span class="sub-skill-name">${skill.name}</span>
+            <span class="skill-token-badge" data-token-badge="${skill.id}">~${tokenDisplay}</span>
             <label class="switch small" onclick="event.stopPropagation()">
               <input type="checkbox" ${isActive ? 'checked' : ''} data-id="${skill.id}">
               <span class="slider round"></span>
@@ -432,6 +486,10 @@ function renderSkills() {
     }
 
     skillsGrid.appendChild(row);
+    // request tokens for visible skills in expanded category
+    if (isExpanded) {
+      groupSkills.forEach(s => requestSkillToken(s).catch(() => {}));
+    }
   });
 }
 
@@ -468,7 +526,7 @@ function renderExplore() {
           <span class="explore-skill-category">${cat}</span>
         </div>
         <div class="explore-row-right">
-          <span class="explore-token-badge">~${((skill.tokens || 500) / 1000).toFixed(1)}k</span>
+          <span class="explore-token-badge" data-token-badge="${skill.id}">~${((skill.tokens || 500) / 1000).toFixed(1)}k</span>
           <label class="switch small" onclick="event.stopPropagation()">
             <input type="checkbox" ${isActive ? 'checked' : ''} data-id="${skill.id}">
             <span class="slider round"></span>
@@ -477,6 +535,9 @@ function renderExplore() {
       </div>
     `;
   }).join('');
+
+  // request tokens for visible explore skills
+  skills.forEach(s => requestSkillToken(s).catch(() => {}));
 
   // Wire up toggles
   exploreGrid.querySelectorAll('input[data-id]').forEach(cb => {
