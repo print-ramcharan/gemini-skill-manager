@@ -307,6 +307,7 @@
         <div class="footer-buttons">
           <button id="apply-btn" class="btn-primary" disabled>Save Changes</button>
           <button id="discard-btn" class="btn-outline">Discard Changes</button>
+          <button id="compute-full-btn" class="btn-secondary">Compute Full Token Counts</button>
         </div>
       </footer>
 
@@ -339,6 +340,21 @@
         <button id="close-detail-btn" class="close-btn">&times;</button>
       </div>
       <div class="detail-body" id="detail-body"></div>
+    </div>
+  </div>
+
+  <!-- Token Progress Overlay -->
+  <div class="overlay" id="token-overlay" style="display:none;">
+    <div class="modal-card">
+      <h2>Computing full token counts</h2>
+      <p id="token-progress-status">Preparing...</p>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="token-progress-bar"></div>
+      </div>
+      <div class="progress-details">
+        <span id="token-progress-count">0 / 0</span>
+        <button id="token-cancel-btn" class="btn-outline">Cancel</button>
+      </div>
     </div>
   </div>
 

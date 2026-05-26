@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, nativeImage } = require('electron');
+const enc = require('gpt-3-encoder');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -206,6 +207,61 @@ ipcMain.handle('apply-changes', async (event, { activeIds }) => {
   }
 
   return { success: true, movedCount: totalMoves };
+});
+
+// Compute full SKILL.md token counts and stream progress
+ipcMain.handle('compute-full-tokens', async () => {
+  const skillsList = [];
+
+  if (!fs.existsSync(skillsDir)) {
+    fs.mkdirSync(skillsDir, { recursive: true });
+  }
+  if (!fs.existsSync(backupDir)) {
+    fs.mkdirSync(backupDir, { recursive: true });
+  }
+
+  const activeFolders = fs.readdirSync(skillsDir).filter(f => fs.statSync(path.join(skillsDir, f)).isDirectory());
+  const backupFolders = fs.readdirSync(backupDir).filter(f => fs.statSync(path.join(backupDir, f)).isDirectory());
+
+  for (const folder of activeFolders) skillsList.push({ id: folder, dir: skillsDir, status: 'active' });
+  for (const folder of backupFolders) skillsList.push({ id: folder, dir: backupDir, status: 'backup' });
+
+  const total = skillsList.length;
+  let processed = 0;
+  const results = [];
+
+  for (const s of skillsList) {
+    const filePath = path.join(s.dir, s.id, 'SKILL.md');
+    let content = '';
+    try {
+      if (fs.existsSync(filePath)) content = fs.readFileSync(filePath, 'utf8');
+    } catch (e) {
+      console.error('Error reading', filePath, e);
+    }
+
+    let tokens = 0;
+    try {
+      const arr = enc.encode(content || '');
+      tokens = arr.length;
+    } catch (e) {
+      // fallback heuristic
+      tokens = Math.ceil((content || '').length / 4);
+    }
+
+    processed++;
+    results.push({ id: s.id, status: s.status, tokens });
+    // stream progress
+    try {
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('token-progress', { current: processed, total, id: s.id, tokens });
+      }
+    } catch (e) {}
+    // tiny pause to let renderer breathe
+    await new Promise(r => setTimeout(r, 5));
+  }
+
+  const totalTokens = results.reduce((a,b)=>a+b.tokens, 0);
+  return { success: true, totalSkills: total, totalTokens, resultsCount: results.length };
 });
 
 module.exports = { parseSkillInfo };

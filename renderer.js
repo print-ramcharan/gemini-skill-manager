@@ -144,6 +144,15 @@ const closeDetailBtn = document.getElementById('close-detail-btn');
 const exploreSearch = document.getElementById('explore-search');
 const exploreGrid = document.getElementById('explore-grid');
 
+// Token compute UI elements
+const computeFullBtn = document.getElementById('compute-full-btn');
+const tokenOverlay = document.getElementById('token-overlay');
+const tokenProgressStatus = document.getElementById('token-progress-status');
+const tokenProgressBar = document.getElementById('token-progress-bar');
+const tokenProgressCount = document.getElementById('token-progress-count');
+const tokenCancelBtn = document.getElementById('token-cancel-btn');
+let tokenComputeRunning = false;
+let tokenCancelRequested = false;
 // Settings Elements
 const settingsLimitToggle = document.getElementById('settings-limit-toggle');
 const defaultCategoryStateSelect = document.getElementById('default-category-state');
@@ -215,6 +224,80 @@ async function init() {
     updateStats();
     renderSkills();
     updateFooterState();
+
+    // wire compute full tokens button
+    if (computeFullBtn) {
+      computeFullBtn.addEventListener('click', async () => {
+        if (tokenComputeRunning) return;
+        tokenComputeRunning = true;
+        tokenCancelRequested = false;
+        if (tokenOverlay) tokenOverlay.style.display = 'block';
+        if (tokenProgressStatus) tokenProgressStatus.textContent = 'Starting full token computation...';
+        if (tokenProgressBar) tokenProgressBar.style.width = '0%';
+        if (tokenProgressCount) tokenProgressCount.textContent = '0 / 0';
+        try {
+          // start compute (main will stream 'token-progress')
+          const promise = window.api.computeFullTokens();
+          const result = await promise;
+          if (tokenProgressStatus) tokenProgressStatus.textContent = `Completed: ${result.totalSkills} skills, ${result.totalTokens} tokens`;
+        } catch (e) {
+          console.error('Full token compute failed', e);
+          if (tokenProgressStatus) tokenProgressStatus.textContent = 'Computation failed';
+        }
+        tokenComputeRunning = false;
+        setTimeout(() => { if (tokenOverlay) tokenOverlay.style.display = 'none'; }, 800);
+      });
+    }
+
+    if (tokenCancelBtn) {
+      tokenCancelBtn.addEventListener('click', () => {
+        tokenCancelRequested = true;
+        if (tokenProgressStatus) tokenProgressStatus.textContent = 'Cancel requested — finishing current item...';
+      });
+    }
+
+    // listen for streaming progress from main
+    if (window.api && typeof window.api.onTokenProgress === 'function') {
+      window.api.onTokenProgress((data) => {
+        if (tokenCancelRequested) return;
+        const { current, total, id, tokens } = data || {};
+        if (tokenProgressStatus) tokenProgressStatus.textContent = `Processing ${id}`;
+        const pct = total ? Math.floor((current / total) * 100) : 0;
+        if (tokenProgressBar) tokenProgressBar.style.width = `${pct}%`;
+        if (tokenProgressCount) tokenProgressCount.textContent = `${current} / ${total}`;
+
+        // update skill in memory and badge if exists
+        const skill = allSkills.find(s => s.id === id);
+        if (skill) {
+          skill.tokens = tokens;
+          updateSkillTokenBadge(id, tokens);
+        }
+
+        // update overall active token budget if skill is active
+        if (selectedActiveIds.has(id)) {
+          const activeSkills = allSkills.filter(s => selectedActiveIds.has(s.id));
+          const sum = activeSkills.reduce((a,b)=>a + (b.tokens||0), 0);
+          const formatted = sum > 1000 ? `${(sum/1000).toFixed(1)}k` : String(sum);
+          tokenBudgetValue.textContent = formatted;
+          const safetyLimit = getSafetyLimitForModel(modelSelect ? modelSelect.value : null);
+          const percentOfLimit = Math.min((sum / safetyLimit) * 100, 100);
+          tokenBudgetBar.style.width = `${percentOfLimit}%`;
+          if (sum > safetyLimit) {
+            tokenBudgetBar.style.backgroundColor = '#FF3B30';
+            tokenBudgetStatus.textContent = 'Token limit exceeded (Truncation!)';
+            tokenBudgetStatus.style.color = '#FF3B30';
+          } else if (sum > safetyLimit * 0.75) {
+            tokenBudgetBar.style.backgroundColor = '#FF9500';
+            tokenBudgetStatus.textContent = 'Approaching limit (Caution)';
+            tokenBudgetStatus.style.color = '#FF9500';
+          } else {
+            tokenBudgetBar.style.backgroundColor = 'var(--success-color)';
+            tokenBudgetStatus.textContent = `Within safety limit (${formatNumber(safetyLimit)})`;
+            tokenBudgetStatus.style.color = 'var(--success-color)';
+          }
+        }
+      });
+    }
   } catch (err) {
     console.error('Failed to load skills:', err);
     skillsGrid.innerHTML = `<div class="loading-state"><p style="color: var(--danger-color);">Failed to load skills. Please check if directories exist.</p></div>`;
