@@ -3,112 +3,293 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gemini Skill Manager</title>
+  <title>Polabathina Ramcharan Teja</title>
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Custom Titlebar to match macOS window controls -->
-  <div class="titlebar">
-    <div class="window-title">Gemini Skill Manager</div>
-  </div>
+  <div class="app-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <a class="nav-item active" href="#" data-view="dashboard">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a class="nav-item" href="#" data-view="explore">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <span>Explore Skills</span>
+        </a>
+        <a class="nav-item" href="#" data-view="settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+          </svg>
+          <span>Settings</span>
+        </a>
+        <a class="nav-item" href="#" data-view="help">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <span>Help</span>
+        </a>
+      </nav>
+    </aside>
 
-  <div class="app-container">
-    <header class="app-header">
-      <div class="header-main">
-        <h1>Customize Active Skills</h1>
-        <p class="subtitle">Enable/disable skills to optimize your context token budget.</p>
-      </div>
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="content-scroll">
 
-      <div class="stats-panel">
-        <div class="stat-card">
-          <span class="stat-value" id="active-count">0</span>
-          <span class="stat-label">Active Skills</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value" id="backup-count">0</span>
-          <span class="stat-label">Backup/Inactive</span>
-        </div>
-        <div class="stat-card budget-card">
-          <div class="budget-header">
-            <span class="stat-value" id="token-budget-value">0k</span>
-            <span class="stat-label">Active Token Size</span>
+        <!-- ═══ DASHBOARD VIEW ═══ -->
+        <div class="view-content active" data-view="dashboard">
+          <header class="content-header">
+            <h1>My Skill Categories</h1>
+          </header>
+
+          <div class="stats-panel">
+            <div class="stat-card">
+              <span class="stat-value" id="active-count">0</span>
+              <span class="stat-label">Active Skills</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="backup-count">0</span>
+              <span class="stat-label">Backup/Inactive</span>
+            </div>
+            <div class="stat-card budget-card">
+              <div class="budget-header">
+                <span class="stat-value" id="token-budget-value">0k</span>
+                <span class="stat-label">Active Token Size</span>
+              </div>
+              <div class="budget-bar-container">
+                <div class="budget-bar" id="token-budget-bar"></div>
+              </div>
+              <span class="budget-status" id="token-budget-status">Within limit (100k)</span>
+            </div>
           </div>
-          <div class="budget-bar-container">
-            <div class="budget-bar" id="token-budget-bar"></div>
+
+          <div class="toolbar">
+            <div class="search-box">
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <input type="text" id="search-input" placeholder="Search skills by name or description...">
+            </div>
+            <div class="filter-group">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="active">Active</button>
+              <button class="filter-btn" data-filter="backup">Backup</button>
+            </div>
           </div>
-          <span class="budget-status" id="token-budget-status">Within limit (100k)</span>
-        </div>
-      </div>
 
-      <div class="presets-bar">
-        <div class="presets-left">
-          <span class="presets-label">Quick Presets:</span>
-          <div class="preset-pills">
-            <button class="preset-pill" data-preset="fullstack">Fullstack Web</button>
-            <button class="preset-pill" data-preset="mobile">Mobile App</button>
-            <button class="preset-pill" data-preset="desktop-dev">Desktop App</button>
-            <button class="preset-pill" data-preset="game-dev">Game Dev</button>
-            <button class="preset-pill" data-preset="web3-dev">Web3 & Crypto</button>
-            <button class="preset-pill" data-preset="ai-ml">AI & ML Engineer</button>
-            <button class="preset-pill" data-preset="devops">Cloud & DevOps</button>
-            <button class="preset-pill" data-preset="science">Data & Science</button>
-            <button class="preset-pill" data-preset="security-auditor">Security</button>
-            <button class="preset-pill" data-preset="cro-business">Business & CRO</button>
-            <button class="preset-pill" data-preset="automation-eng">Automation</button>
-            <button class="preset-pill" data-preset="minimalist">Minimalist</button>
+          <div class="presets-bar">
+            <div class="presets-left">
+              <span class="presets-label">Quick Presets:</span>
+              <div class="preset-pills">
+                <button class="preset-pill" data-preset="fullstack">Fullstack Web</button>
+                <button class="preset-pill" data-preset="mobile">Mobile App</button>
+                <button class="preset-pill" data-preset="desktop-dev">Desktop App</button>
+                <button class="preset-pill" data-preset="game-dev">Game Dev</button>
+                <button class="preset-pill" data-preset="web3-dev">Web3 &amp; Crypto</button>
+                <button class="preset-pill" data-preset="ai-ml">AI &amp; ML Engineer</button>
+                <button class="preset-pill" data-preset="devops">Cloud &amp; DevOps</button>
+                <button class="preset-pill" data-preset="science">Data &amp; Science</button>
+                <button class="preset-pill" data-preset="security-auditor">Security</button>
+                <button class="preset-pill" data-preset="cro-business">Business &amp; CRO</button>
+                <button class="preset-pill" data-preset="automation-eng">Automation</button>
+                <button class="preset-pill" data-preset="minimalist">Minimalist</button>
+              </div>
+            </div>
+            <div class="limit-toggle-container">
+              <label class="switch small">
+                <input type="checkbox" id="limit-toggle" checked>
+                <span class="slider round"></span>
+              </label>
+              <span class="limit-toggle-text">Limit to 20k</span>
+            </div>
+          </div>
+
+          <div class="selection-bar">
+            <button id="select-all-btn" class="text-btn">Select All</button>
+            <span class="divider">|</span>
+            <button id="deselect-all-btn" class="text-btn">Deselect All</button>
+            <span class="divider">|</span>
+            <button id="collapse-all-btn" class="text-btn">Collapse All</button>
+            <span class="divider">|</span>
+            <button id="expand-all-btn" class="text-btn">Expand All</button>
+          </div>
+
+          <div class="categories-section">
+            <h2 class="section-title">Available Categories</h2>
+            <div class="categories-list" id="skills-grid">
+              <div class="loading-state" id="loading-state">
+                <div class="spinner"></div>
+                <p>Scanning skills...</p>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="limit-toggle-container">
-          <label class="switch small">
-            <input type="checkbox" id="limit-toggle" checked>
-            <span class="slider round"></span>
-          </label>
-          <span class="limit-toggle-text">Limit to 20k</span>
+
+        <!-- ═══ EXPLORE VIEW ═══ -->
+        <div class="view-content" data-view="explore">
+          <header class="content-header">
+            <h1>Explore Skills</h1>
+            <p class="subtitle">Browse and toggle all skills in a flat, searchable list.</p>
+          </header>
+
+          <div class="explore-toolbar">
+            <div class="search-box">
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <input type="text" id="explore-search" placeholder="Search by skill name, category, or description...">
+            </div>
+          </div>
+
+          <div class="explore-list" id="explore-grid">
+            <!-- Rendered by JS -->
+          </div>
         </div>
+
+        <!-- ═══ SETTINGS VIEW ═══ -->
+        <div class="view-content" data-view="settings">
+          <header class="content-header">
+            <h1>Settings</h1>
+          </header>
+
+          <div class="settings-group">
+            <h3>Token Budget</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-name">Safety Limit</span>
+                <span class="setting-desc">Maximum token budget before truncation warning</span>
+              </div>
+              <div class="setting-control">
+                <span class="setting-value">20,000 tokens</span>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-name">Enforce Limit on Presets</span>
+                <span class="setting-desc">Restrict preset selections to stay under the safety limit</span>
+              </div>
+              <div class="setting-control">
+                <label class="switch small">
+                  <input type="checkbox" id="settings-limit-toggle" checked>
+                  <span class="slider round"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>Display</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-name">Default Category State</span>
+                <span class="setting-desc">How categories appear when the app loads</span>
+              </div>
+              <div class="setting-control">
+                <select id="default-category-state">
+                  <option value="collapsed" selected>Collapsed</option>
+                  <option value="expanded">Expanded</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>About</h3>
+            <div class="about-info">
+              <p><strong>Gemini Skill Manager</strong></p>
+              <p>Version 1.0.0</p>
+              <p>A desktop utility to manage your AI assistant's active skill set and optimize context token usage.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ HELP VIEW ═══ -->
+        <div class="view-content" data-view="help">
+          <header class="content-header">
+            <h1>Help</h1>
+          </header>
+
+          <div class="help-section">
+            <h3>Getting Started</h3>
+            <p>The Skill Manager lets you control which skills are active for your AI assistant. Active skills consume context tokens — keeping only what you need improves performance and prevents truncation.</p>
+          </div>
+
+          <div class="help-section">
+            <h3>Dashboard</h3>
+            <p>Your main workspace. Skills are organized by category with master toggles. Click the chevron (›) on any category to expand it and manage individual skills.</p>
+          </div>
+
+          <div class="help-section">
+            <h3>Quick Presets</h3>
+            <p>One-click presets configure your skills for common workflows: Full-stack Web, Mobile, AI/ML, DevOps, Security, and more. Enable "Limit to 20k" to keep presets within the token safety zone.</p>
+          </div>
+
+          <div class="help-section">
+            <h3>Token Budget</h3>
+            <p>The gauge in the stats panel shows how much context space your active skills consume. The safety limit is 20,000 tokens — exceeding it may cause the assistant to truncate skill descriptions.</p>
+            <ul>
+              <li><strong>Green</strong> — Within limit, optimal performance</li>
+              <li><strong>Orange</strong> — Approaching limit, consider deactivating skills</li>
+              <li><strong>Red</strong> — Over limit, truncation likely</li>
+            </ul>
+          </div>
+
+          <div class="help-section">
+            <h3>Explore Skills</h3>
+            <p>Use the Explore tab to browse every skill in a flat, searchable list. Ideal when you know the skill name but not its category.</p>
+          </div>
+
+          <div class="help-section">
+            <h3>Keyboard Shortcuts</h3>
+            <div class="shortcut-grid">
+              <span class="shortcut-key">⌘ F</span>
+              <span class="shortcut-desc">Focus search field</span>
+              <span class="shortcut-key">⌘ S</span>
+              <span class="shortcut-desc">Save changes</span>
+              <span class="shortcut-key">Esc</span>
+              <span class="shortcut-desc">Close modals</span>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <div class="controls-bar">
-        <div class="search-box">
-          <input type="text" id="search-input" placeholder="Search skills by name or description...">
+      <!-- Footer -->
+      <footer class="content-footer" id="action-footer">
+        <div class="footer-info">
+          <span class="changes-badge" id="changes-badge">0 changes pending</span>
         </div>
-        <div class="filter-group">
-          <button class="filter-btn active" data-filter="all">All</button>
-          <button class="filter-btn" data-filter="active">Active</button>
-          <button class="filter-btn" data-filter="backup">Backup</button>
+        <div class="footer-buttons">
+          <button id="apply-btn" class="btn-primary" disabled>Save Changes</button>
+          <button id="discard-btn" class="btn-outline">Discard Changes</button>
         </div>
-        <div class="selection-actions">
-          <button id="select-all-btn" class="text-btn">Select All</button>
-          <span class="divider">|</span>
-          <button id="deselect-all-btn" class="text-btn">Deselect All</button>
-          <span class="divider">|</span>
-          <button id="collapse-all-btn" class="text-btn">Collapse All</button>
-          <span class="divider">|</span>
-          <button id="expand-all-btn" class="text-btn">Expand All</button>
-        </div>
-      </div>
-    </header>
+      </footer>
 
-    <main class="skills-grid" id="skills-grid">
-      <!-- Loading state -->
-      <div class="loading-state" id="loading-state">
-        <div class="spinner"></div>
-        <p>Scanning skills...</p>
+      <div class="copyright">
+        &copy; 2026 Polabathina Ramcharan Teja
       </div>
-    </main>
-
-    <!-- Floating Action Bar -->
-    <footer class="action-footer" id="action-footer">
-      <div class="footer-info">
-        <span class="changes-badge" id="changes-badge">0 changes pending</span>
-      </div>
-      <button id="apply-btn" class="primary-btn" disabled>Apply Changes</button>
-    </footer>
+    </div>
   </div>
 
   <!-- Progress Overlay Modal -->
   <div class="overlay" id="progress-overlay">
-    <div class="progress-card">
+    <div class="modal-card">
       <h2>Moving Files...</h2>
       <p id="progress-status">Preparing to migrate skills...</p>
       <div class="progress-bar-container">
@@ -123,14 +304,12 @@
 
   <!-- Skill Details Modal -->
   <div class="overlay" id="detail-overlay">
-    <div class="detail-card">
+    <div class="modal-card detail-card">
       <div class="detail-header">
         <h2 id="detail-title">Skill Details</h2>
         <button id="close-detail-btn" class="close-btn">&times;</button>
       </div>
-      <div class="detail-body" id="detail-body">
-        <!-- Rendered markdown content -->
-      </div>
+      <div class="detail-body" id="detail-body"></div>
     </div>
   </div>
 

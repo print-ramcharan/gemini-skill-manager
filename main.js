@@ -1,14 +1,17 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
 let mainWindow;
+const appIconPath = path.join(__dirname, 'new-logo.png');
+const dockIcon = nativeImage.createFromPath(appIconPath);
 
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 800,
+    icon: appIconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -18,10 +21,25 @@ function createWindow() {
     backgroundColor: '#121214'
   });
 
-  mainWindow.loadFile('index.html');
+  const htmlPath = path.join(__dirname, 'index.html');
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+    console.error('Renderer failed to load:', { errorCode, errorDescription, validatedURL, htmlPath });
+  });
+
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    console.error('Renderer process gone:', details);
+  });
+
+  mainWindow.loadFile(htmlPath).catch(error => {
+    console.error('Failed to load main window HTML:', error);
+  });
 }
 
 app.whenReady().then(() => {
+  if (process.platform === 'darwin' && !dockIcon.isEmpty()) {
+    app.dock.setIcon(dockIcon);
+  }
+
   createWindow();
 
   app.on('activate', function () {
@@ -189,3 +207,5 @@ ipcMain.handle('apply-changes', async (event, { activeIds }) => {
 
   return { success: true, movedCount: totalMoves };
 });
+
+module.exports = { parseSkillInfo };
