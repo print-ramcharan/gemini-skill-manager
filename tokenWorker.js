@@ -64,8 +64,27 @@ function estimateTokensFast(text, model) {
 
 self.addEventListener('message', (e) => {
   const msg = e.data;
-  if (!msg || msg.type !== 'count') return;
-  const { text = '', model = null, id = null } = msg;
-  const count = estimateTokensFast(text, model);
-  self.postMessage({ id, count });
+  if (!msg) return;
+
+  if (msg.type === 'count') {
+    const { text = '', model = null, id = null } = msg;
+    const count = estimateTokensFast(text, model);
+    self.postMessage({ id, count });
+    return;
+  }
+
+  // support batched requests: { type: 'batch', items: [{id, text, model}, ...] }
+  if (msg.type === 'batch' && Array.isArray(msg.items)) {
+    const items = msg.items;
+    for (const it of items) {
+      try {
+        const count = estimateTokensFast(it.text || '', it.model || null);
+        // post individual results so renderer can reuse existing handlers
+        self.postMessage({ id: it.id, count });
+      } catch (e) {
+        self.postMessage({ id: it.id, count: 0 });
+      }
+    }
+    return;
+  }
 });

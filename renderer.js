@@ -44,6 +44,41 @@ if (tokenWorker) {
   });
 }
 
+// Batching support: accumulate many skill requests and send one 'batch' message
+const skillBatchQueue = [];
+let skillBatchTimer = null;
+function scheduleFlushSkillBatch(delay = 40) {
+  if (skillBatchTimer) return;
+  skillBatchTimer = setTimeout(() => {
+    skillBatchTimer = null;
+    flushSkillBatch();
+  }, delay);
+}
+
+function flushSkillBatch() {
+  if (!tokenWorker) {
+    // fallback: resolve individually
+    while (skillBatchQueue.length) {
+      const item = skillBatchQueue.shift();
+      const est = estimateTokens(item.text);
+      const cb = pendingWorkerRequests.get(item.reqId);
+      if (cb) { pendingWorkerRequests.delete(item.reqId); try { cb(est); } catch (e) {} }
+    }
+    return;
+  }
+
+  if (skillBatchQueue.length === 0) return;
+  const items = skillBatchQueue.splice(0, skillBatchQueue.length).map(it => ({ id: it.reqId, text: it.text, model: it.model }));
+  try {
+    tokenWorker.postMessage({ type: 'batch', items });
+  } catch (e) {
+    // if batch fails, fall back to sending individually
+    for (const it of items) {
+      tokenWorker.postMessage({ type: 'count', id: it.id, text: it.text, model: it.model });
+    }
+  }
+}
+
 // Per-skill token cache and helpers
 const skillTokenCache = new Map();
 
@@ -61,21 +96,20 @@ function requestSkillToken(skill) {
   }
 
   return new Promise((resolve) => {
-    const reqId = `skill-${skill.id}-${Date.now()}`;
+    const reqId = `skill-${skill.id}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
     const model = modelSelect ? modelSelect.value : null;
+    const text = `${skill.id}\n${skill.name}\n${skill.description||''}`;
     const cb = (count) => {
       skill.tokens = count;
       skillTokenCache.set(skill.id, { hash, count, ts: Date.now() });
       updateSkillTokenBadge(skill.id, count);
       resolve(count);
     };
-    if (tokenWorker) {
-      pendingWorkerRequests.set(reqId, cb);
-      tokenWorker.postMessage({ type: 'count', id: reqId, text: `${skill.id}\n${skill.name}\n${skill.description||''}`, model });
-    } else {
-      const est = estimateTokens(`${skill.id} ${skill.name} ${skill.description||''}`);
-      cb(est);
-    }
+
+    pendingWorkerRequests.set(reqId, cb);
+    // enqueue for batch flush
+    skillBatchQueue.push({ reqId, text, model });
+    scheduleFlushSkillBatch();
   });
 }
 
