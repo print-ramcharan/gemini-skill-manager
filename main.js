@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 
 let mainWindow;
-const appIconPath = path.join(__dirname, 'new-logo.png');
+const appIconPath = path.join(__dirname, 'colorful-updated.png');
 const dockIcon = nativeImage.createFromPath(appIconPath);
 
 function createWindow() {
