@@ -17,6 +17,10 @@ const backupCountEl = document.getElementById('backup-count');
 const tokenBudgetValue = document.getElementById('token-budget-value');
 const tokenBudgetBar = document.getElementById('token-budget-bar');
 const tokenBudgetStatus = document.getElementById('token-budget-status');
+const modelSelect = document.getElementById('model-select');
+const promptInput = document.getElementById('prompt-input');
+const promptTokenCountEl = document.getElementById('prompt-token-count');
+const modelWindowDisplay = document.getElementById('model-window-display');
 const selectAllBtn = document.getElementById('select-all-btn');
 const deselectAllBtn = document.getElementById('deselect-all-btn');
 const collapseAllBtn = document.getElementById('collapse-all-btn');
@@ -147,7 +151,7 @@ function updateStats() {
   const formattedTokens = totalTokens > 1000 ? `${(totalTokens / 1000).toFixed(1)}k` : totalTokens;
   tokenBudgetValue.textContent = formattedTokens;
 
-  const safetyLimit = 20000;
+  const safetyLimit = getSafetyLimitForModel(modelSelect ? modelSelect.value : null);
   const percentOfLimit = Math.min((totalTokens / safetyLimit) * 100, 100);
   tokenBudgetBar.style.width = `${percentOfLimit}%`;
 
@@ -161,9 +165,59 @@ function updateStats() {
     tokenBudgetStatus.style.color = '#FF9500';
   } else {
     tokenBudgetBar.style.backgroundColor = 'var(--success-color)';
-    tokenBudgetStatus.textContent = 'Within safety limit (20k)';
+    tokenBudgetStatus.textContent = `Within safety limit (${formatNumber(safetyLimit)})`;
     tokenBudgetStatus.style.color = 'var(--success-color)';
   }
+}
+
+function formatNumber(n) {
+  return n >= 1000 ? `${(n/1000).toFixed(1)}k` : String(n);
+}
+
+function getSafetyLimitForModel(model) {
+  const mapping = {
+    'gpt-4o-mini-16k': 16000,
+    'gpt-4o-mini-32k': 32768,
+    'gpt-4-turbo': 131072,
+    'gpt-3.5-turbo': 4096,
+    'claude-2': 100000
+  };
+  return mapping[model] || 20000;
+}
+
+// Update model window display when selection changes
+if (modelSelect) {
+  modelSelect.addEventListener('change', () => {
+    modelWindowDisplay.textContent = formatNumber(getSafetyLimitForModel(modelSelect.value));
+    updateStats();
+  });
+  // initialize
+  modelWindowDisplay.textContent = formatNumber(getSafetyLimitForModel(modelSelect.value));
+}
+
+// Simple, fast token estimator (approximation):
+function estimateTokens(text) {
+  if (!text) return 0;
+  // approximate: tokens ~= words * 1.33, fallback to bytes/4
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  const byWords = Math.ceil(words * 1.33);
+  const byBytes = Math.ceil(new Blob([text]).size / 4);
+  return Math.max(1, Math.min(byWords, byBytes));
+}
+
+// Debounced prompt token counting
+let promptDebounce = null;
+if (promptInput) {
+  promptInput.addEventListener('input', (e) => {
+    clearTimeout(promptDebounce);
+    promptDebounce = setTimeout(() => {
+      const count = estimateTokens(e.target.value);
+      promptTokenCountEl.textContent = count;
+      // show relation to model window
+      const window = getSafetyLimitForModel(modelSelect ? modelSelect.value : null);
+      modelWindowDisplay.textContent = formatNumber(window);
+    }, 150);
+  });
 }
 
 // ═══════════════════════════════

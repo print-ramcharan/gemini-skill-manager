@@ -194,6 +194,25 @@
           </div>
 
           <div class="settings-group">
+            <h3>Model & Context</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-name">Model</span>
+                <span class="setting-desc">Select the model to derive its context window</span>
+              </div>
+              <div class="setting-control">
+                <select id="model-select">
+                  <option value="gpt-4o-mini-16k">gpt-4o-mini-16k (16k)</option>
+                  <option value="gpt-4o-mini-32k">gpt-4o-mini-32k (32k)</option>
+                  <option value="gpt-4-turbo">gpt-4-turbo (128k)</option>
+                  <option value="gpt-3.5-turbo">gpt-3.5-turbo (4k)</option>
+                  <option value="claude-2">claude-2 (100k)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
             <h3>Display</h3>
             <div class="setting-row">
               <div class="setting-info">
@@ -248,6 +267,16 @@
               <li><strong>Orange</strong> — Approaching limit, consider deactivating skills</li>
               <li><strong>Red</strong> — Over limit, truncation likely</li>
             </ul>
+          </div>
+
+          <div class="help-section">
+            <h3>Prompt Tester (Token Counter)</h3>
+            <p>Paste sample prompts here to see an approximate live token count.</p>
+            <textarea id="prompt-input" rows="6" style="width:100%;border-radius:6px;padding:10px;margin-top:8px;" placeholder="Type or paste a prompt..."></textarea>
+            <div style="margin-top:8px;display:flex;gap:12px;align-items:center;">
+              <div>Estimated tokens: <strong id="prompt-token-count">0</strong></div>
+              <div>Model window: <strong id="model-window-display">20,000</strong></div>
+            </div>
           </div>
 
           <div class="help-section">
