@@ -70,6 +70,47 @@ The app moves directories between:
 
  If you prefer `electron-builder` for producing installer artifacts, let me know and I can add it.
 
+### Install / Deploy
+
+Install on macOS (packager output or `electron-builder`):
+
+```bash
+# build (packager) or use electron-builder
+npm run build:mac
+
+# find the produced .app and install to /Applications
+APP=$(find dist -name "Gemini Skill Manager.app" -print -quit)
+rm -rf "/Applications/Gemini Skill Manager.app" || true
+cp -R "$APP" /Applications/
+
+# refresh LaunchServices and macOS caches so the Dock shows the new icon
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "/Applications/Gemini Skill Manager.app" || true
+touch "/Applications/Gemini Skill Manager.app" || true
+qlmanage -r cache || true
+killall Dock || true
+open "/Applications/Gemini Skill Manager.app" || true
+```
+
+Notes:
+- Code signing: building signed DMGs or notarized apps requires an Apple Developer account and codesign configuration. Unsigned artifacts still run locally.
+
+Install on Windows:
+
+```bash
+# Using electron-packager (produces a folder) or electron-builder (produces installer/exe)
+npm run build:win
+
+# If electron-builder produced an NSIS installer (recommended):
+npm run dist:win
+
+# Example: run the installer produced in dist/ or unzip the portable ZIP and run
+# dist\Gemini Skill Manager Setup 1.0.0.exe
+```
+
+Notes:
+- Building Windows installers on macOS may require Wine for some targets (NSIS). You can still produce ZIP/artifact outputs without Wine and build full installers on a Windows CI runner.
+- To install manually, copy the packaged folder to `C:\Program Files\Gemini Skill Manager` and create a shortcut to the executable.
+
 ### Build macOS App
 To package the app into `/Applications/Gemini Skill Manager.app`:
 ```bash
