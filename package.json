@@ -6,6 +6,8 @@
   "scripts": {
     "start": "electron .",
     "build:mac": "npx -y electron-packager . \"Gemini Skill Manager\" --platform=darwin --overwrite --icon=icon.icns --out=dist",
+    "build:win": "npx -y electron-packager . \"Gemini Skill Manager\" --platform=win32 --arch=ia32,x64 --overwrite --icon=icons/windows/icon.ico --out=dist",
+    "build:all": "npm run build:mac && npm run build:win",
     "test": "jest",
     "lint": "eslint ."
   },

@@ -41,6 +41,35 @@ The app moves directories between:
    npm start
    ```
 
+ ### Build Instructions
+ For packaging the app for macOS and Windows locally using `electron-packager`:
+
+ - Build macOS (requires `icon.icns` in project root):
+
+ ```bash
+ npm run build:mac
+ ```
+
+ - Build Windows (expects a Windows `.ico` at `icons/windows/icon.ico`):
+
+ ```bash
+ npm run build:win
+ ```
+
+ - Build both sequentially:
+
+ ```bash
+ npm run build:all
+ ```
+
+ If you need to create a Windows `.ico` from a PNG on macOS or Linux, ImageMagick can do this:
+
+ ```bash
+ convert colorful-padded.png -define icon:auto-resize=256,128,64,48,32,16 icons/windows/icon.ico
+ ```
+
+ If you prefer `electron-builder` for producing installer artifacts, let me know and I can add it.
+
 ### Build macOS App
 To package the app into `/Applications/Gemini Skill Manager.app`:
 ```bash
