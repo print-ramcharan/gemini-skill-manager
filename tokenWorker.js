@@ -2,6 +2,15 @@
 // Approximate tokenizer running in a WebWorker.
 // Receives {type: 'count', text, model, id} and responds with {id, count}
 
+// Attempt to load a browser-friendly encoder (gpt-3-encoder) via importScripts.
+let browserEncoderAvailable = false;
+try {
+  importScripts('node_modules/gpt-3-encoder/dist/encoder.min.js');
+  if (typeof encode === 'function') browserEncoderAvailable = true;
+} catch (e) {
+  // not available in worker environment
+}
+
 const modelWordFactor = {
   'gpt-4o-mini-16k': 1.3,
   'gpt-4o-mini-32k': 1.3,
@@ -12,6 +21,16 @@ const modelWordFactor = {
 
 function estimateTokensFast(text, model) {
   if (!text) return 0;
+  // Prefer exact encoder if available
+  if (browserEncoderAvailable) {
+    try {
+      const tokens = encode(text);
+      return tokens.length;
+    } catch (e) {
+      // fall back
+    }
+  }
+
   // word-based estimate
   const words = text.trim().split(/\s+/).filter(Boolean).length;
   const factor = modelWordFactor[model] || 1.25;
