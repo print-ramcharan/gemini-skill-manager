@@ -5,8 +5,20 @@
 // Attempt to load a browser-friendly encoder (gpt-3-encoder) via importScripts.
 let browserEncoderAvailable = false;
 try {
-  importScripts('node_modules/gpt-3-encoder/dist/encoder.min.js');
-  if (typeof encode === 'function') browserEncoderAvailable = true;
+  importScripts('vendor/encoder.browser.js');
+  if (typeof encode === 'function' || typeof Encoder === 'function') {
+    // encoder exposes `encode` or `Encoder` depending on build
+    browserEncoderAvailable = true;
+    // if Encoder exists but not encode, create a wrapper
+    if (typeof encode !== 'function' && typeof Encoder === 'function') {
+      // create a simple encode wrapper using Encoder
+      const _Encoder = Encoder;
+      encode = (text) => {
+        const e = new _Encoder();
+        return e.encode(text);
+      };
+    }
+  }
 } catch (e) {
   // not available in worker environment
 }
