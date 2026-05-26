@@ -116,8 +116,14 @@ function requestSkillToken(skill) {
 function updateSkillTokenBadge(skillId, count) {
   const el = document.querySelector(`[data-token-badge="${skillId}"]`);
   if (el) {
-    const formatted = count > 1000 ? `${(count/1000).toFixed(1)}k` : count;
-    el.textContent = `~${formatted}`;
+    // if user prefers full counts and count looks like full tokens, show exact number
+    if (displayFullCounts) {
+      const formatted = count > 1000 ? `${(count/1000).toFixed(1)}k` : count;
+      el.textContent = `${formatted}`;
+    } else {
+      const formatted = count > 1000 ? `${(count/1000).toFixed(1)}k` : count;
+      el.textContent = `~${formatted}`;
+    }
   }
 }
 const selectAllBtn = document.getElementById('select-all-btn');
@@ -153,9 +159,11 @@ const tokenProgressCount = document.getElementById('token-progress-count');
 const tokenCancelBtn = document.getElementById('token-cancel-btn');
 let tokenComputeRunning = false;
 let tokenCancelRequested = false;
+let displayFullCounts = false;
 // Settings Elements
 const settingsLimitToggle = document.getElementById('settings-limit-toggle');
 const defaultCategoryStateSelect = document.getElementById('default-category-state');
+const displayFullToggle = document.getElementById('display-full-toggle');
 
 // ═══════════════════════════════
 // VIEW SWITCHING
@@ -255,6 +263,21 @@ async function init() {
         if (tokenProgressStatus) tokenProgressStatus.textContent = 'Cancel requested — finishing current item...';
       });
     }
+
+    // restore display toggle
+    try {
+      const saved = localStorage.getItem('gsm_display_full');
+      displayFullCounts = saved === '1';
+      if (displayFullToggle) displayFullToggle.checked = displayFullCounts;
+      if (displayFullToggle) {
+        displayFullToggle.addEventListener('change', () => {
+          displayFullCounts = displayFullToggle.checked;
+          localStorage.setItem('gsm_display_full', displayFullCounts ? '1' : '0');
+          // refresh badges
+          allSkills.forEach(s => updateSkillTokenBadge(s.id, displayFullCounts && s.tokens ? s.tokens : (s.tokens || 0)));
+        });
+      }
+    } catch (e) {}
 
     // listen for streaming progress from main
     if (window.api && typeof window.api.onTokenProgress === 'function') {

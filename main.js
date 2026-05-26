@@ -43,6 +43,38 @@ app.whenReady().then(() => {
 
   createWindow();
 
+  // Run a background full-token compute once at startup (non-blocking)
+  (async () => {
+    try {
+      // small delay to let window initialize
+      await new Promise(r => setTimeout(r, 500));
+      // reuse the IPC handler logic by invoking computeFullTokens-like routine
+      const skillsList = [];
+
+      const activeFolders = fs.readdirSync(skillsDir).filter(f => fs.statSync(path.join(skillsDir, f)).isDirectory());
+      const backupFolders = fs.readdirSync(backupDir).filter(f => fs.statSync(path.join(backupDir, f)).isDirectory());
+
+      for (const folder of activeFolders) skillsList.push({ id: folder, dir: skillsDir, status: 'active' });
+      for (const folder of backupFolders) skillsList.push({ id: folder, dir: backupDir, status: 'backup' });
+
+      const total = skillsList.length;
+      let processed = 0;
+
+      for (const s of skillsList) {
+        const filePath = path.join(s.dir, s.id, 'SKILL.md');
+        let content = '';
+        try { if (fs.existsSync(filePath)) content = fs.readFileSync(filePath, 'utf8'); } catch (e) {}
+        let tokens = 0;
+        try { tokens = enc.encode(content || '').length; } catch (e) { tokens = Math.ceil((content||'').length/4); }
+        processed++;
+        try { if (mainWindow && mainWindow.webContents) mainWindow.webContents.send('token-progress', { current: processed, total, id: s.id, tokens }); } catch (e) {}
+        await new Promise(r => setTimeout(r, 5));
+      }
+    } catch (e) {
+      console.error('Background token compute failed', e);
+    }
+  })();
+
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
