@@ -121,4 +121,4 @@ rm -rf dist
 ```
 
 ## Contributing
-Pull requests are welcome. Feel free to open issues or submit changes to add new presets, adjust category rules, or improve the UI.
+Pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the expected workflow, testing notes, and review checklist.
