@@ -21,6 +21,28 @@ const modelSelect = document.getElementById('model-select');
 const promptInput = document.getElementById('prompt-input');
 const promptTokenCountEl = document.getElementById('prompt-token-count');
 const modelWindowDisplay = document.getElementById('model-window-display');
+
+// Token worker
+let tokenWorker = null;
+let lastActiveTokenCount = 0;
+try {
+  tokenWorker = new Worker('tokenWorker.js');
+} catch (err) {
+  console.warn('Token worker unavailable, falling back to estimator', err);
+  tokenWorker = null;
+}
+
+const pendingWorkerRequests = new Map();
+if (tokenWorker) {
+  tokenWorker.addEventListener('message', (e) => {
+    const { id, count } = e.data || {};
+    const cb = pendingWorkerRequests.get(id);
+    if (cb) {
+      pendingWorkerRequests.delete(id);
+      try { cb(count); } catch (err) { console.error(err); }
+    }
+  });
+}
 const selectAllBtn = document.getElementById('select-all-btn');
 const deselectAllBtn = document.getElementById('deselect-all-btn');
 const collapseAllBtn = document.getElementById('collapse-all-btn');
@@ -141,33 +163,52 @@ function updateStats() {
   activeCountEl.textContent = activeCount;
   backupCountEl.textContent = backupCount;
 
-  let totalTokens = 0;
-  allSkills.forEach(skill => {
-    if (selectedActiveIds.has(skill.id)) {
-      totalTokens += skill.tokens || 500;
+  // compute active skills text and ask worker to estimate tokens
+  const activeSkills = allSkills.filter(s => selectedActiveIds.has(s.id));
+  const concatText = activeSkills.map(s => `${s.id}\n${s.name}\n${s.description || ''}`).join('\n\n');
+
+  const requestId = `active-${Date.now()}-${Math.random()}`;
+  const model = modelSelect ? modelSelect.value : null;
+
+  const updateFromWorker = (count) => {
+    lastActiveTokenCount = count;
+    const formattedTokens = count > 1000 ? `${(count / 1000).toFixed(1)}k` : count;
+    tokenBudgetValue.textContent = formattedTokens;
+
+    const safetyLimit = getSafetyLimitForModel(model);
+    const percentOfLimit = Math.min((count / safetyLimit) * 100, 100);
+    tokenBudgetBar.style.width = `${percentOfLimit}%`;
+
+    if (count > safetyLimit) {
+      tokenBudgetBar.style.backgroundColor = '#FF3B30';
+      tokenBudgetStatus.textContent = 'Token limit exceeded (Truncation!)';
+      tokenBudgetStatus.style.color = '#FF3B30';
+    } else if (count > safetyLimit * 0.75) {
+      tokenBudgetBar.style.backgroundColor = '#FF9500';
+      tokenBudgetStatus.textContent = 'Approaching limit (Caution)';
+      tokenBudgetStatus.style.color = '#FF9500';
+    } else {
+      tokenBudgetBar.style.backgroundColor = 'var(--success-color)';
+      tokenBudgetStatus.textContent = `Within safety limit (${formatNumber(safetyLimit)})`;
+      tokenBudgetStatus.style.color = 'var(--success-color)';
     }
-  });
+  };
 
-  const formattedTokens = totalTokens > 1000 ? `${(totalTokens / 1000).toFixed(1)}k` : totalTokens;
-  tokenBudgetValue.textContent = formattedTokens;
-
-  const safetyLimit = getSafetyLimitForModel(modelSelect ? modelSelect.value : null);
-  const percentOfLimit = Math.min((totalTokens / safetyLimit) * 100, 100);
-  tokenBudgetBar.style.width = `${percentOfLimit}%`;
-
-  if (totalTokens > safetyLimit) {
-    tokenBudgetBar.style.backgroundColor = '#FF3B30';
-    tokenBudgetStatus.textContent = 'Token limit exceeded (Truncation!)';
-    tokenBudgetStatus.style.color = '#FF3B30';
-  } else if (totalTokens > safetyLimit * 0.75) {
-    tokenBudgetBar.style.backgroundColor = '#FF9500';
-    tokenBudgetStatus.textContent = 'Approaching limit (Caution)';
-    tokenBudgetStatus.style.color = '#FF9500';
+  if (tokenWorker) {
+    pendingWorkerRequests.set(requestId, updateFromWorker);
+    tokenWorker.postMessage({ type: 'count', id: requestId, text: concatText, model });
   } else {
-    tokenBudgetBar.style.backgroundColor = 'var(--success-color)';
-    tokenBudgetStatus.textContent = `Within safety limit (${formatNumber(safetyLimit)})`;
-    tokenBudgetStatus.style.color = 'var(--success-color)';
+    // fallback estimation
+    const fallback = estimateTokens(concatText);
+    updateFromWorker(fallback);
   }
+}
+
+// Debounced updateStats wrapper to avoid flooding the worker
+let statsDebounce = null;
+function scheduleUpdateStats() {
+  clearTimeout(statsDebounce);
+  statsDebounce = setTimeout(updateStats, 120);
 }
 
 function formatNumber(n) {
