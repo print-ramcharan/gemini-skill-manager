@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini Skill Manager</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Custom Titlebar to match macOS window controls -->
+  <div class="titlebar">
+    <div class="window-title">Gemini Skill Manager</div>
+  </div>
+
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-main">
+        <h1>Customize Active Skills</h1>
+        <p class="subtitle">Enable/disable skills to optimize your context token budget.</p>
+      </div>
+
+      <div class="stats-panel">
+        <div class="stat-card">
+          <span class="stat-value" id="active-count">0</span>
+          <span class="stat-label">Active Skills</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="backup-count">0</span>
+          <span class="stat-label">Backup/Inactive</span>
+        </div>
+        <div class="stat-card budget-card">
+          <div class="budget-header">
+            <span class="stat-value" id="token-budget-value">0k</span>
+            <span class="stat-label">Active Token Size</span>
+          </div>
+          <div class="budget-bar-container">
+            <div class="budget-bar" id="token-budget-bar"></div>
+          </div>
+          <span class="budget-status" id="token-budget-status">Within limit (100k)</span>
+        </div>
+      </div>
+
+      <div class="presets-bar">
+        <div class="presets-left">
+          <span class="presets-label">Quick Presets:</span>
+          <div class="preset-pills">
+            <button class="preset-pill" data-preset="fullstack">Fullstack Web</button>
+            <button class="preset-pill" data-preset="mobile">Mobile App</button>
+            <button class="preset-pill" data-preset="desktop-dev">Desktop App</button>
+            <button class="preset-pill" data-preset="game-dev">Game Dev</button>
+            <button class="preset-pill" data-preset="web3-dev">Web3 & Crypto</button>
+            <button class="preset-pill" data-preset="ai-ml">AI & ML Engineer</button>
+            <button class="preset-pill" data-preset="devops">Cloud & DevOps</button>
+            <button class="preset-pill" data-preset="science">Data & Science</button>
+            <button class="preset-pill" data-preset="security-auditor">Security</button>
+            <button class="preset-pill" data-preset="cro-business">Business & CRO</button>
+            <button class="preset-pill" data-preset="automation-eng">Automation</button>
+            <button class="preset-pill" data-preset="minimalist">Minimalist</button>
+          </div>
+        </div>
+        <div class="limit-toggle-container">
+          <label class="switch small">
+            <input type="checkbox" id="limit-toggle" checked>
+            <span class="slider round"></span>
+          </label>
+          <span class="limit-toggle-text">Limit to 20k</span>
+        </div>
+      </div>
+
+      <div class="controls-bar">
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="Search skills by name or description...">
+        </div>
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="active">Active</button>
+          <button class="filter-btn" data-filter="backup">Backup</button>
+        </div>
+        <div class="selection-actions">
+          <button id="select-all-btn" class="text-btn">Select All</button>
+          <span class="divider">|</span>
+          <button id="deselect-all-btn" class="text-btn">Deselect All</button>
+          <span class="divider">|</span>
+          <button id="collapse-all-btn" class="text-btn">Collapse All</button>
+          <span class="divider">|</span>
+          <button id="expand-all-btn" class="text-btn">Expand All</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="skills-grid" id="skills-grid">
+      <!-- Loading state -->
+      <div class="loading-state" id="loading-state">
+        <div class="spinner"></div>
+        <p>Scanning skills...</p>
+      </div>
+    </main>
+
+    <!-- Floating Action Bar -->
+    <footer class="action-footer" id="action-footer">
+      <div class="footer-info">
+        <span class="changes-badge" id="changes-badge">0 changes pending</span>
+      </div>
+      <button id="apply-btn" class="primary-btn" disabled>Apply Changes</button>
+    </footer>
+  </div>
+
+  <!-- Progress Overlay Modal -->
+  <div class="overlay" id="progress-overlay">
+    <div class="progress-card">
+      <h2>Moving Files...</h2>
+      <p id="progress-status">Preparing to migrate skills...</p>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <div class="progress-details">
+        <span id="progress-percent">0%</span>
+        <span id="progress-count">0 / 0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skill Details Modal -->
+  <div class="overlay" id="detail-overlay">
+    <div class="detail-card">
+      <div class="detail-header">
+        <h2 id="detail-title">Skill Details</h2>
+        <button id="close-detail-btn" class="close-btn">&times;</button>
+      </div>
+      <div class="detail-body" id="detail-body">
+        <!-- Rendered markdown content -->
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
